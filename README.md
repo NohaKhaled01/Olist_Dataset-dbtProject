@@ -33,7 +33,7 @@ Raw Olist CSVs are loaded into a `raw` schema in DuckDB, then transformed throug
 | `dim_sellers` (sellers + geolocation per zip) | `fct_reviews` (grain: one review per order) |
 | `dim_date` (generated calendar, 2016–2018) | |
 
-![Lineage Graph](./docs/Lineage Graph.png)
+![alt text](./docs/Lineage Graph.png)
 
 ---
 
@@ -65,12 +65,14 @@ A few decisions worth calling out (more in the model descriptions):
 ```bash
 # 1. Install dbt + DuckDB adapter
 pip install dbt-duckdb
+```
 
 Note - Optional:
 **Set up the connection.** 
 Copy `profiles.example.yml` to `~/.dbt/profiles.yml` (Path on Windows: `C:\Users\<you>\.dbt\profiles.yml`), creating the `.dbt` folder if needed.
 [This helps configure the paths, to make sure that the load_raw.sql file in step 4 loads the raw files in the correct database path]
 
+```bash
 # 2. Install package dependencies (dbt_utils)
 dbt deps
 ```
