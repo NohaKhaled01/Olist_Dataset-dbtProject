@@ -33,7 +33,7 @@ Raw Olist CSVs are loaded into a `raw` schema in DuckDB, then transformed throug
 | `dim_sellers` (sellers + geolocation per zip) | `fct_reviews` (grain: one review per order) |
 | `dim_date` (generated calendar, 2016–2018) | |
 
-![alt text](.\docs\Lineage Graph.png)
+![alt text](./docs/LineageGraph.png)
 
 ---
 
