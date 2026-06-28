@@ -1,0 +1,120 @@
+version: 2
+
+models:
+
+    - name: dim_products
+      description: 'One row per product, with english translation folded in from the translation table'
+      columns:
+        - name: product_id
+          description: 'Primary key'
+          data_tests:
+            - unique
+            - not_null
+
+    - name: dim_customers
+      description: 'One row per customer, with lat and lng data brought in from the geolocation table [averaged per zip code]'
+      columns:
+        - name: customer_id
+          description: 'Primary key'
+          data_tests:
+            - unique
+            - not_null
+        - name: customer_unique_id
+          data_tests:
+            - not_null
+    
+    - name: dim_sellers
+      description: 'One row per seller, with lat and lng data brought in from the geolocation table [averaged per zip code]'
+      columns:
+        - name: seller_id
+          description: 'Primary key'
+          data_tests:
+            - unique
+            - not_null
+
+    - name: fct_orders
+      description: 'One row per order, with total number of items per order brought in from order items table'
+      columns:
+        - name: order_id
+          description: 'Primary key'
+          data_tests:
+            - unique
+            - not_null
+        - name: customer_id
+          description: 'Foreign key - points to customers dimension table'
+          data_tests:
+            - not_null
+            - relationships:
+                arguments:
+                  to: ref('dim_customers')
+                  field: customer_id
+
+    - name: fct_orderitems
+      description: 'One row per one item per order, with product id, seller id, customer id, and order timestamps brought in from relevant dimension tables'
+      columns:
+        - name: order_id
+          description: 'Part of Composite Primary key [+ order_item_id]'
+          data_tests:
+            - not_null
+        - name: order_item_id
+          description: 'item number in order'
+          data_tests:
+            - not_null
+            - dbt_utils.accepted_range:
+                arguments:
+                  min_value: 0
+                  inclusive: false
+        - name: product_id
+          description: 'Foreign key - points to products in products dimension table'
+          data_tests:
+            - not_null
+            - relationships:
+                arguments:
+                  to: ref('dim_products')
+                  field: product_id
+        - name: seller_id
+          description: 'Foreign key - points to sellers in sellers dimension table'
+          data_tests:
+            - not_null
+            - relationships:
+                arguments:
+                  to: ref('dim_sellers')
+                  field: seller_id
+        - name: customer_id
+          description: 'Foreign key - points to customers in customers dimension table'
+          data_tests:
+            - not_null
+            - relationships:
+                arguments:
+                  to: ref('dim_customers')
+                  field: customer_id
+      data_tests:
+        - dbt_utils.unique_combination_of_columns:
+            arguments:
+              combination_of_columns:
+                - order_id
+                - order_item_id
+    
+    - name: fct_reviews
+      description: 'One review per order. Multiple review IDs could have the same Order ID'
+      columns:
+        - name: review_id
+          data_tests:
+            - not_null
+        - name: order_id
+          data_tests:
+            - not_null
+        - name: review_score
+          data_tests:
+            - not_null
+            - accepted_values:
+                arguments:
+                  values: [1, 2, 3, 4, 5]
+        - name: customer_id
+          data_tests:
+            - not_null
+            - relationships:
+                arguments:
+                  to: ref('dim_customers')
+                  field: customer_id
+    

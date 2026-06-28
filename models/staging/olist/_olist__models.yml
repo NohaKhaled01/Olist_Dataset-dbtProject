@@ -1,0 +1,155 @@
+version: 2
+
+models:
+    - name: stg_olist__orders
+      description: 'One row per order, cleaned and renamed from raw.order'
+      columns:
+        - name: order_id
+          description: 'Primary key - unique identifier for each order'
+          data_tests:
+            - unique
+            - not_null
+        - name: customer_id
+          description: 'Foreign key to customers'
+          data_tests:
+            - not_null
+            - relationships:
+                to: ref('stg_olist__customers')
+                field: customer_id
+        - name: order_status
+          description: 'Current status of order'
+          data_tests:
+            - accepted_values:
+                values: ['invoiced', 'processing', 'approved', 'shipped', 'delivered', 'canceled', 'unavailable', 'created']
+
+    - name: stg_olist__customers
+      description: 'One row per order-level customer, as is from raw.customers'
+      columns:
+        - name: customer_id
+          description: 'Primary key - unique identifier for customer who placed an order'
+          data_tests:
+            - unique
+            - not_null
+        
+    - name: stg_olist__sellers
+      description: 'One row per seller'
+      columns:
+        - name: seller_id
+          description: 'Primary key - unique identifier for sellers'
+          data_tests:
+            - unique
+            - not_null
+      
+    - name: stg_olist__products
+      description: 'One row per product, identified with product id'
+      columns:
+        - name: product_id
+          description: 'Primary key - unique identifier for each product'
+          data_tests:
+            - unique
+            - not_null
+        - name: product_category_name
+          description: 'Foreign key to product category name in translations table'
+          data_tests:
+            - relationships:
+                to: ref('stg_olist__translation')
+                field: product_category_name
+    
+    - name: stg_olist__translation
+      description: 'Translation of product names from brazilian to english'
+      columns:
+        - name: product_category_name
+          description: 'Primary key - unique identifier. Foreign key to products table'
+          data_tests:
+            - unique
+            - not_null
+    
+    - name: stg_olist__orderitems
+      description: 'Items in orders'
+      columns:
+        - name: order_id
+          description: 'Part of composite primary key [+ order_item_id]'
+          data_tests:
+            - not_null
+            - relationships:
+                to: ref('stg_olist__orders')
+                field: order_id
+        - name: product_id
+          description: 'Product ids for products in order'
+          data_tests:
+            - not_null
+            - relationships:
+                to: ref('stg_olist__products')
+                field: product_id
+        - name: seller_id
+          description: 'product sellers id'
+          data_tests:
+            - not_null
+            - relationships:
+                to: ref('stg_olist__sellers')
+                field: seller_id
+      data_tests:
+        - dbt_utils.unique_combination_of_columns:
+            combination_of_columns:
+              - order_id
+              - order_item_id
+
+    - name: stg_olist__reviews
+      description: 'Reviews for orders'
+      columns:
+        - name: review_id
+          description: 'Primary key - review unique identifier'
+          data_tests:
+            - not_null
+        - name: order_id
+          description: 'Foreign key, connects to order id in orders table'
+          data_tests:
+            - not_null
+            - relationships:
+                to: ref('stg_olist__orders')
+                field: order_id
+      data_tests:
+        - dbt_utils.unique_combination_of_columns:
+            combination_of_columns:
+              - review_id
+              - order_id
+    - name: stg_olist__payments
+      description: 'Payments record'
+      columns:
+        - name: order_id
+          description: 'Composite primary key [+ payment sequential]. Order identifier'
+          data_tests:
+            - not_null
+            - relationships:
+                to: ref('stg_olist__orders')
+                field: order_id
+        - name: payment_sequential
+          description: 'Composite primary key [+ order id]. Payment sequential for current order'
+          data_tests:
+            - not_null
+            - dbt_utils.accepted_range:
+                min_value: 1
+      data_tests:
+        - dbt_utils.unique_combination_of_columns:
+            combination_of_columns:
+              - order_id
+              - payment_sequential
+
+    - name: stg_olist__geolocation
+      description: 'Geolocation, lat and lang, to define locations in dataset'
+      columns:
+        - name: geolocation_zip_code_prefix
+          data_tests:
+            - not_null
+        - name: geolocation_lat
+          data_tests:
+            - not_null
+        - name: geolocation_lng
+          data_tests:
+            - not_null
+        - name: geolocation_city
+          data_tests:
+            - not_null
+        - name: geolocation_state
+          data_tests:
+            - not_null

@@ -1,0 +1,19 @@
+# Files from compiling SQL:
+target/
+dbt_packages/
+logs/
+
+# DuckDB built database:
+*.duckdb
+*.duckdb.tmp/
+*.duckdb.wal
+
+# Raw source data - download from Kaggle (see README):
+olist_raw/
+
+# Python virtual environment - if available:
+venv/
+
+# OS / editor cruft:
+.DS_Store
+.vscode/
