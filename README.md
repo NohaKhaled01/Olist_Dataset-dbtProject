@@ -28,12 +28,12 @@ Raw Olist CSVs are loaded into a `raw` schema in DuckDB, then transformed throug
 
 | Dimensions | Facts |
 |---|---|
-| `dim_products` (products + category translation) | `fct_order_items` (grain: one line item — the core sales fact) |
+| `dim_products` (products + category translation) | `fct_orderitems` (grain: one line item — the core sales fact) |
 | `dim_customers` (customers + geolocation per zip) | `fct_orders` (grain: one order) |
 | `dim_sellers` (sellers + geolocation per zip) | `fct_reviews` (grain: one review per order) |
 | `dim_date` (generated calendar, 2016–2018) | |
 
-![Lineage Graph](docs/Lineage Graph.png)
+![Lineage Graph](./docs/Lineage Graph.png)
 
 ---
 
@@ -66,13 +66,22 @@ A few decisions worth calling out (more in the model descriptions):
 # 1. Install dbt + DuckDB adapter
 pip install dbt-duckdb
 
+Note - Optional:
+**Set up the connection.** 
+Copy `profiles.example.yml` to `~/.dbt/profiles.yml` (Path on Windows: `C:\Users\<you>\.dbt\profiles.yml`), creating the `.dbt` folder if needed.
+[This helps configure the paths, to make sure that the load_raw.sql file in step 4 loads the raw files in the correct database path]
+
 # 2. Install package dependencies (dbt_utils)
 dbt deps
 ```
 
 **3. Get the data.** The raw CSVs aren't committed (they're ~120MB). Download the [Olist dataset from Kaggle](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) and place the CSVs in `olist_raw/`.
 
-**4. Load the raw CSVs** into a `raw` schema in DuckDB. <!-- TODO: optionally describe or script your load step (the read_csv_auto commands) -->
+**4. Load the raw CSVs** into a `raw` schema in DuckDB.
+From the project directory [the directory containing the dbt_project.yml], run:
+```bash
+duckdb dev.duckdb < load_raw.sql
+```
 
 **5. Build and test everything:**
 
