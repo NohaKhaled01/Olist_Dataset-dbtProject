@@ -11,9 +11,11 @@ This project is a **dbt re-implementation** of an earlier analysis I built with 
 ## What this project demonstrates
 
 - **Dimensional modeling (Kimball star schema):** fact and dimension separation, grain declaration, degenerate dimensions, role-playing date dimension.
-- **Layered dbt architecture:** sources → staging → marts, with a clean DAG.
+- **Layered dbt architecture:** sources → staging → intermediate → marts, with a clean DAG.
 - **Testing:** generic tests (unique, not_null, relationships, accepted_values, accepted_range) plus composite-key uniqueness, validating grain and referential integrity across the whole star.
+- **Derived analytics:** a customer-retention aggregate built at person-grain, feeding a Power BI dashboard.
 - **Documentation & lineage:** model/column descriptions and a generated lineage graph.
+- **End-to-end pipeline:** raw CSVs → dbt (staging → marts) → Power BI dashboard.
 - **Reproducibility:** the entire warehouse rebuilds from raw CSVs with a single `dbt build`.
 
 ---
@@ -33,7 +35,20 @@ Raw Olist CSVs are loaded into a `raw` schema in DuckDB, then transformed throug
 | `dim_sellers` (sellers + geolocation per zip) | `fct_reviews` (grain: one review per order) |
 | `dim_date` (generated calendar, 2016–2018) | |
 
-![alt text](./docs/LineageGraph.png)
+Intermediate (models/intermediate/) — stepping-stone models that build on the marts. int_customer_orders attaches each real customer (customer_unique_id) to their orders, feeding the retention aggregate.
+
+Derived mart — agg_customer_retention (grain: one row per customer_unique_id) rolls orders up to the person level for repeat-customer analysis.
+
+![alt text](./docs/LineageGraph_II.png)
+
+---
+
+PowerBI
+
+Power BI connects to the marts (exported as Parquet) with the star-schema relationships rebuilt in the model view — including the role-playing dim_date relationship and the person-grain retention table. Sample overview:
+
+![alt text](./docs/PowerBISnapshot.png)
+Orders over time, most-ordered product categories, customer concentration by state, and the corrected ~3% returning-customer rate.
 
 ---
 
@@ -46,6 +61,7 @@ A few decisions worth calling out (more in the model descriptions):
 - **Missing geolocation:** ~278 customers have no coordinates (gaps in the Olist geolocation data). These are kept (LEFT JOIN) with null coordinates and a `has_geolocation` flag, rather than dropped or fabricated.
 - **`item_count` on `fct_orders`:** an order-grain measure aggregated up from line items. Left null (not zero) for orders with no line items, so averages aren't skewed by false zeros.
 - **Degenerate dimensions:** `order_id` is carried in the facts as a degenerate dimension (no `dim_orders`), used to group line items back to their parent order.
+- **Retention measured at the correct grain:** customer retention is calculated over customer_unique_id (the real person) rather than the per-order customer_id. Modeling at the right grain corrected a miscalculation in my [original analysis](https://github.com/NohaKhaled01/Olist_DataSet), which had counted at order-grain and roughly doubled the repeat-rate — the dbt version reports ~3%, matching Olist's reported figure.
 
 ---
 
@@ -54,7 +70,7 @@ A few decisions worth calling out (more in the model descriptions):
 - **dbt Core** (transformation)
 - **DuckDB** (embedded analytical warehouse)
 - **dbt_utils** (composite-key tests, date spine)
-- *(Planned)* **Power BI** — connecting to the marts to reproduce the dashboards from the [original project](https://github.com/NohaKhaled01/Olist_DataSet), completing the raw → dbt → BI pipeline.
+- **Power BI** — connecting to the marts to reproduce the dashboards from the [original project](https://github.com/NohaKhaled01/Olist_DataSet), completing the raw → dbt → BI pipeline.
 
 ---
 
@@ -107,8 +123,11 @@ dbt docs serve
 ```
 models/
   staging/    # one cleaned view per source table
+  intermediate/    # stepping-stone models (int_customersorders)
   marts/      # star schema (dims + facts) + tests
 seeds/        # curated product category translation
+load_raw.sql  # loads the raw CSVs into DuckDB
+profiles.example.yml # sample connection config
 dbt_project.yml
 packages.yml
 ```

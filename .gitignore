@@ -17,3 +17,6 @@ venv/
 # OS / editor cruft:
 .DS_Store
 .vscode/
+
+# Parquet export files:
+exports/

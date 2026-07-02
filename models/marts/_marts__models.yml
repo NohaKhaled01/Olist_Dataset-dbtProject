@@ -117,4 +117,12 @@ models:
                 arguments:
                   to: ref('dim_customers')
                   field: customer_id
+    - name: agg_customerretention
+      description: 'One row per customer, with number of orders calculated'
+      columns:
+        - name: customer_unique_id
+          description: 'Primary key'
+          data_tests:
+            - unique
+            - not_null
     
