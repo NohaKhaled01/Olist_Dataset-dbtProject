@@ -54,7 +54,7 @@ Orders over time, most-ordered product categories, customer concentration by sta
 
 ## Modeling notes & decisions
 
-A few decisions worth calling out (more in the model descriptions):
+A few decisions worth calling out:
 
 - **Translation gap fix via seed:** a handful of product categories had no English translation. I added the missing rows as a curated **seed** (`seeds/`), keeping the relationship test honest.
 - **Geolocation grain:** the raw geolocation table has many rows per zip code. It's collapsed to one row per zip (averaged lat/lng) *before* joining, to preserve dimension grain. Canonical city/state come from the customers/sellers tables to avoid the geolocation table's inconsistent spellings.
